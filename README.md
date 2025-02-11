@@ -137,6 +137,187 @@ The API includes proper error handling for:
 4. Push to branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+
+## Deployment Instructions
+
+These instructions guide you through setting up and deploying the FastAPI application to your **EC2 instance**.
+
+### 1. Set Up Your EC2 Instance
+
+1. **Launch an EC2 instance** with Ubuntu 20.04 or later.
+2. **SSH into the EC2 instance**:
+
+    ```bash
+    ssh -i <your-key.pem> ubuntu@<EC2-Public-IP>
+    ```
+
+### 2. Install Docker and Docker Compose on EC2
+
+Run the following commands to install **Docker** and **Docker Compose** on your EC2 instance:
+
+```bash
+# Update package index
+sudo apt update
+
+# Install Docker
+sudo apt install -y docker.io
+
+# Install Docker Compose
+sudo apt install -y docker-compose
+```
+
+### 3. Clone the Repository on EC2
+
+Clone the repository on your EC2 instance to the desired directory:
+
+```bash
+cd ~
+git clone https://github.com/yourusername/fastapi-app.git
+cd fastapi-app
+```
+
+### 4. Create a Docker Compose Configuration
+
+Create a `docker-compose.yml` file in the project root directory for your FastAPI application:
+
+```yaml
+version: "3.8"
+
+services:
+  fastapi:
+    build: .
+    container_name: fastapi-app
+    expose:
+      - "8000"
+    restart: always
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - fastapi
+
+networks:
+  app-network:
+    driver: bridge
+```
+
+This configuration sets up two services:
+
+- **fastapi**: The FastAPI application.
+- **nginx**: NGINX reverse proxy to forward requests to the FastAPI app.
+
+### 5. Create a NGINX Configuration File (Optional)
+
+If you’re using NGINX as a reverse proxy, you’ll need to create a `nginx.conf` file in the root directory:
+
+```nginx
+server {
+    listen 80;
+
+    location / {
+        proxy_pass http://fastapi:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+### 6. Start the Application with Docker Compose
+
+Once everything is set up, you can start the FastAPI application with the following command:
+
+```bash
+docker-compose up --build -d
+```
+
+This will build the Docker containers and start them in detached mode.
+
+---
+
+## GitHub Actions CI/CD Setup
+
+GitHub Actions will automate the deployment process.
+
+### 1. Set Up GitHub Secrets
+
+Ensure that the SSH private key used to authenticate with the EC2 instance is stored as a **GitHub Secret**.
+
+1. Go to **Settings** → **Secrets** → **New repository secret**.
+2. Name the secret `EC2_SSH_PRIVATE_KEY` and paste your SSH private key into the value field.
+
+### 2. Configure the CI/CD Workflow
+
+Here’s the **CD Workflow** (`.github/workflows/cd.yml`) to automate deployment to your EC2 instance.
+
+```yaml
+name: CD Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.13.2'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Deploy Application
+        run: |
+          echo "Deploying FastAPI application..."
+
+      - name: SSH into EC2 and deploy
+        env:
+          PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          ssh -o StrictHostKeyChecking=no ubuntu@<EC2-Public-IP> << 'EOF'
+            cd ~/fastapi-app
+            git pull origin main
+            docker-compose down
+            docker-compose up --build -d
+            docker-compose restart fastapi-app
+          EOF
+```
+
+This workflow runs whenever changes are pushed to the `main` branch, automating the deployment process by:
+
+1. SSH-ing into your EC2 instance.
+2. Pulling the latest code from GitHub.
+3. Rebuilding and restarting the Docker container.
+
+---
+
+### Final Notes
+
+- **Security**: Ensure that your **EC2 Security Group** allows traffic on ports **80** (for HTTP) and **22** (for SSH).
+- **Testing**: After deployment, you should be able to access the FastAPI application via the EC2 instance's public IP:
+
+  ```bash
+  http://<EC2-Public-IP>
+  ```
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

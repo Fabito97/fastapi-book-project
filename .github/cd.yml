@@ -37,7 +37,7 @@ jobs:
 
     - name: SSH into EC2 and deploy
       env:
-          PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}  # Set the SSH private key as a GitHub secret
+          PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}  
       run: |
         mkdir -p ~/.ssh
         echo "$PRIVATE_KEY" > ~/.ssh/id_rsa
@@ -52,5 +52,5 @@ jobs:
           # For docker to rebuild the app container
           docker-compose down
           docker-compose up --build -d         
-          docker-compose restart fastapi  # Or use systemd to restart if not using Docker
+          docker-compose restart fastapi-app  
         EOF
