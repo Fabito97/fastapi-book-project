@@ -49,7 +49,7 @@ fastapi-book-project/
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/hng12-devbotops/fastapi-book-project.git
+git clone https://github.com/hng12-devbot/fastapi-book-project.git
 cd fastapi-book-project
 ```
 
@@ -297,7 +297,6 @@ jobs:
             git pull origin main
             docker-compose down
             docker-compose up --build -d
-            docker-compose restart fastapi-app
           EOF
 ```
 
