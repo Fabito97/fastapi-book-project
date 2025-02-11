@@ -11,7 +11,7 @@ jobs:
   runs-on: ubuntu-latest
   steps:
     - name: Check out the code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -33,3 +33,24 @@ jobs:
       run: |
         # Restart the FastAPI application (e.g., using PM2 or systemd)
         echo "Restarting FastAPI app"
+
+
+    - name: SSH into EC2 and deploy
+      env:
+          PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}  # Set the SSH private key as a GitHub secret
+      run: |
+        mkdir -p ~/.ssh
+        echo "$PRIVATE_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+
+        # SSH into EC2 and run deployment steps
+        ssh -o StrictHostKeyChecking=no ubuntu@54.91.201.99 << 'EOF'
+          # Pull the latest code or rebuild the Docker container
+          cd ~/fastapi-app
+          git pull origin main  # if you're using git to fetch the latest code
+
+          # For docker to rebuild the app container
+          docker-compose down
+          docker-compose up --build -d         
+          docker-compose restart fastapi  # Or use systemd to restart if not using Docker
+        EOF
