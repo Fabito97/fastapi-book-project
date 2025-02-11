@@ -49,7 +49,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no ubuntu@54.210.81.95 << 'EOF'
 
             # Pull the latest code or rebuild the Docker container
-            cd ~fastapi-app/fastapi-book-project
+            cd ~/fastapi-app/fastapi-book-project
             git pull origin main  # For using git to fetch the latest code
 
             # For docker to rebuild the app container
