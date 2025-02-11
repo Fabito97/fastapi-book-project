@@ -25,8 +25,7 @@ jobs:
 
     - name: Deploy Application
       run: |
-        # Add your deployment scripts here (e.g., SSH to serve and pull latest code)
-        # Or use a service like Heroku, AWS, or DigitalOcean for deployment
+        # Placeholder for deployment
         echo "Deploying FastAPI application..."
 
     - name: Restart application
@@ -47,7 +46,7 @@ jobs:
         ssh -o StrictHostKeyChecking=no ubuntu@54.91.201.99 << 'EOF'
           # Pull the latest code or rebuild the Docker container
           cd ~/fastapi-app
-          git pull origin main  # if you're using git to fetch the latest code
+          git pull origin main  # For using git to fetch the latest code
 
           # For docker to rebuild the app container
           docker-compose down
