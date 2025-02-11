@@ -37,18 +37,22 @@ jobs:
         env:
           PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}  
         run: |
+          set -e  # Ensure script fails on error
           mkdir -p ~/.ssh
           echo "$PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
+          # Clean up after using private key
+          trap 'rm -f ~/.ssh/id_rsa' EXIT
+
           # SSH into EC2 and run deployment steps
-          ssh -o StrictHostKeyChecking=no ubuntu@54.91.201.99 << 'EOF'
+          ssh -o StrictHostKeyChecking=no ubuntu@54.210.81.95 << 'EOF'
+
             # Pull the latest code or rebuild the Docker container
-            cd ~/fastapi-app
+            cd ~fastapi-app/fastapi-book-project
             git pull origin main  # For using git to fetch the latest code
 
             # For docker to rebuild the app container
             docker-compose down
             docker-compose up --build -d         
-            docker-compose restart fastapi-app  
           EOF
