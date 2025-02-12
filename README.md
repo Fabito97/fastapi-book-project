@@ -56,7 +56,7 @@ cd fastapi-book-project
 2. Create a virtual environment:
 
 ```bash
-python -m venv venv
+python -m venv env
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
@@ -187,8 +187,8 @@ services:
   fastapi:
     build: .
     container_name: fastapi-app
-    expose:
-      - "8000"
+    port:
+      - "8000:8000"
     restart: always
 
   nginx:
@@ -253,7 +253,7 @@ Ensure that the SSH private key used to authenticate with the EC2 instance is st
 
 ### 2. Configure the CI/CD Workflow
 
-Here’s the **CD Workflow** (`.github/workflows/cd.yml`) to automate deployment to your EC2 instance.
+Here’s the **CD Workflow** (`.github/workflows/cd-workflow.yml`) to automate deployment to your EC2 instance.
 
 ```yaml
 name: CD Workflow
